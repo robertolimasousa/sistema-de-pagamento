@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rifa Online do Ifá</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Quicksand:wght@500;700&display=swap');
+    :root { --azul-pastel:#b8d8e6; --dourado-suave:#d4af37; --cinza-texto:#5d707f; --fundo-papel:#fdfbf7; --verde-ok:#2e8b57; --vermelho:#d9534f; }
+    *,*::before,*::after{box-sizing:border-box}
+    body{background-color:var(--fundo-papel);background-image:url('https://www.transparenttextures.com/patterns/handmade-paper.png');margin:0;min-height:100vh;font-family:'Quicksand',sans-serif;color:var(--cinza-texto);padding:20px;display:flex;justify-content:center;align-items:center}
+    .cartao-site{background:white;max-width:720px;width:100%;border-radius:35px;padding:32px;box-shadow:0 20px 40px rgba(0,0,0,.05);text-align:center;border:2px solid rgba(184,216,230,.3)}
+    h2{font-family:'Fredoka',sans-serif;font-size:14px;letter-spacing:3px;color:#888;margin-bottom:5px;text-transform:uppercase}
+    h1{font-family:'Fredoka',sans-serif;color:var(--azul-pastel);font-size:32px;margin:0 0 10px;line-height:1.2}.nome-bebe{color:var(--dourado-suave);font-size:40px}
+    .item-info{margin-bottom:10px;font-size:15px;text-align:left}
+    .confirmar-btn{background:#b8d8e6;color:#fff;border:0;padding:16px 22px;border-radius:50px;font-weight:700;font-size:16px;cursor:pointer}
+    .confirmar-btn:hover{opacity:.95}
+    .cartao-img{width:100%;max-width:320px;border-radius:28px;box-shadow:0 16px 28px rgba(0,0,0,.08);margin:22px auto 14px;display:block}
+    .rifa-grid{margin-top:24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:8px}
+    .numero{border:1px solid #d5e7ef;border-radius:12px;padding:8px 0;font-weight:700;font-size:13px;background:#fff;user-select:none}
+    .numero.disponivel{color:#246;cursor:pointer}.numero.vendido{background:#ffe7e6;color:var(--vermelho);border-color:#f1b2af;cursor:not-allowed}
+    .numero.selecionado{background:var(--azul-pastel);color:white;border-color:var(--azul-pastel)}
+    .status{margin-top:14px;font-size:14px;min-height:22px;text-align:left}.status.ok{color:var(--verde-ok)}.status.err{color:var(--vermelho)}
+    .qrcode-box{margin-top:18px;padding:16px;border-radius:16px;border:1px dashed #cbdde5;display:none}.qrcode-box img{width:190px;height:190px}
+    .qrcode-box small{display:block;margin-top:8px;color:#5b6a74}
+    .modal-overlay{position:fixed;inset:0;background:rgba(20,30,45,.55);display:none;justify-content:center;align-items:center;z-index:1000;padding:20px}
+    .modal-dialog{background:#f7fbff;border-radius:24px;max-width:420px;width:100%;padding:28px;box-shadow:0 18px 40px rgba(0,0,0,.18);border:1px solid rgba(184,216,230,.6);text-align:left}
+    .modal-dialog h3{margin:0 0 16px;font-family:'Fredoka',sans-serif;color:var(--azul-pastel);font-size:22px}
+    .modal-dialog label{display:block;margin-bottom:8px;font-size:14px;color:#52606d}
+    .modal-dialog input{width:100%;border:1px solid #cbdde5;border-radius:16px;padding:12px 14px;margin-bottom:16px;font-size:15px;outline:none}
+    .modal-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}.modal-actions button{border:0;border-radius:50px;padding:12px 22px;font-weight:700;cursor:pointer}
+    .btn-cancel{background:#fff;color:#5d707f;border:1px solid #d5e7ef}.btn-submit{background:#b8d8e6;color:white}
+    .modal-error{color:#d9534f;font-size:13px;min-height:20px;margin-bottom:12px}.escondido{display:none!important}
+    .setup-box{margin-top:12px;text-align:left;background:#fffbe9;border:1px dashed #ecd69b;padding:10px 12px;border-radius:12px;font-size:13px;color:#7a6b35}
+    @media (max-width:600px){body{padding:16px}.cartao-site{padding:24px 16px;border-radius:24px}h1{font-size:26px}.nome-bebe{font-size:32px}.confirmar-btn{width:100%;margin-top:10px}.modal-actions{flex-direction:column}.modal-actions button{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="cartao-site">
+    <h2>Convite Especial</h2>
+    <h1>Rifa Online<br><span class="nome-bebe">do Ifá</span></h1>
+    <img src="Captura de tela 2026-05-06 005859.png" class="cartao-img" alt="Imagem do convite do Ifá" />
+    <div class="item-info"><strong>📍 ONDE:</strong> Online pelo Instagram.</div>
+    <div class="item-info"><strong>🎁 1 ponto = R$ 5,00:</strong> Clique em Participar, escolha seus números e finalize a compra.</div>
+    <div id="setupAviso" class="setup-box escondido"></div>
+    <button id="btnParticipar" class="confirmar-btn">Participar</button>
+    <div id="gridContainer" class="escondido"><div id="rifaGrid" class="rifa-grid"></div><button id="btnComprar" class="confirmar-btn escondido" style="margin-top:20px;width:100%;">Comprar</button></div>
+    <div id="status" class="status"></div>
+    <div id="qrcodeBox" class="qrcode-box"><h3>Pagamento e Confirmação</h3><p id="resumoCompra"></p><img id="qrcodeImg" alt="QR Code para pagamento" /><small>Escaneie o QR code e envie o comprovante para confirmação do pagamento.</small></div>
+    <div id="numeroModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-dialog"><h3 id="modalTitle">Participar da Rifa</h3><div class="modal-error" id="modalError"></div><label for="inputNome">Nome</label><input id="inputNome" type="text" placeholder="Digite seu nome" autocomplete="name" /><label for="inputTelefone">WhatsApp / Telefone</label><input id="inputTelefone" type="tel" placeholder="Digite seu WhatsApp" autocomplete="tel" /><div class="modal-actions"><button type="button" class="btn-cancel" id="modalCancel">Cancelar</button><button type="button" class="btn-submit" id="modalSubmit">Confirmar</button></div></div></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const TOTAL_NUMEROS = 100;
+    const VALOR_POR_NUMERO = 5;
+    const WHATSAPP_PROPRIETARIO = '5511999999999';
+
+    // ⚠️ Configure no Supabase (Project Settings > API)
+    const SUPABASE_URL = 'COLE_SUA_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'COLE_SUA_SUPABASE_ANON_KEY';
+    const TABELA_RIFA = 'rifa_vendas';
+
+    let numerosSelecionados = [];
+    let vendasCache = {};
+    let supabase = null;
+
+    function setupIncompleto() {
+      return !SUPABASE_URL.startsWith('https://') || SUPABASE_ANON_KEY.includes('COLE_');
+    }
+
+    function mostrarAvisoSetup(msg) {
+      const box = document.getElementById('setupAviso');
+      box.textContent = msg;
+      box.classList.remove('escondido');
+    }
+
+    async function iniciarBackend() {
+      if (setupIncompleto()) {
+        mostrarAvisoSetup('Configure SUPABASE_URL e SUPABASE_ANON_KEY no código para ativar reservas em tempo real.');
+        throw new Error('Setup do Supabase incompleto');
+      }
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      await carregarVendasServidor();
+      assinarAtualizacoesTempoReal();
+    }
+
+    async function carregarVendasServidor() {
+      const { data, error } = await supabase
+        .from(TABELA_RIFA)
+        .select('numero,nome,telefone,valor,data_iso,pagamento_confirmado')
+        .order('numero', { ascending: true });
+
+      if (error) throw error;
+      vendasCache = {};
+      for (const venda of data) vendasCache[venda.numero] = venda;
+      renderGrid();
+    }
+
+    function assinarAtualizacoesTempoReal() {
+      supabase.channel('rifa-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: TABELA_RIFA }, () => carregarVendasServidor())
+        .subscribe();
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('rifaGrid');
+      grid.innerHTML = '';
+      for (let i = 1; i <= TOTAL_NUMEROS; i++) {
+        const el = document.createElement('div');
+        let classes = 'numero';
+        if (vendasCache[i]) classes += ' vendido'; else if (numerosSelecionados.includes(i)) classes += ' selecionado'; else classes += ' disponivel';
+        el.className = classes;
+        el.title = vendasCache[i] ? `Comprado por ${vendasCache[i].nome}` : 'Disponível';
+        el.textContent = i.toString().padStart(3, '0');
+        if (!vendasCache[i]) el.addEventListener('click', () => toggleSelecao(i));
+        grid.appendChild(el);
+      }
+      atualizarBotaoComprar();
+    }
+
+    function toggleSelecao(numero) {
+      const i = numerosSelecionados.indexOf(numero);
+      if (i > -1) numerosSelecionados.splice(i, 1); else numerosSelecionados.push(numero);
+      renderGrid();
+    }
+
+    function atualizarBotaoComprar() {
+      const btn = document.getElementById('btnComprar');
+      if (numerosSelecionados.length) {
+        const total = numerosSelecionados.length * VALOR_POR_NUMERO;
+        btn.textContent = `Comprar ${numerosSelecionados.length} número(s) - R$ ${total.toFixed(2).replace('.', ',')}`;
+        btn.classList.remove('escondido');
+      } else btn.classList.add('escondido');
+    }
+
+    function openModal() {
+      if (!numerosSelecionados.length) return;
+      document.getElementById('modalTitle').textContent = `Reservar ${numerosSelecionados.length} número(s)`;
+      document.getElementById('modalError').textContent = '';
+      document.getElementById('inputNome').value = '';
+      document.getElementById('inputTelefone').value = '';
+      document.getElementById('numeroModal').style.display = 'flex';
+      document.getElementById('inputNome').focus();
+    }
+    function closeModal(){document.getElementById('numeroModal').style.display='none'}
+    function telefoneValido(t){return t.replace(/\D/g,'').length>=10}
+
+    async function reservarNumeros(nome, telefone) {
+      const status = document.getElementById('status');
+      const total = numerosSelecionados.length * VALOR_POR_NUMERO;
+      const numerosStr = numerosSelecionados.join(', ');
+
+      const { data: existentes, error: errExistentes } = await supabase
+        .from(TABELA_RIFA).select('numero').in('numero', numerosSelecionados);
+      if (errExistentes) throw errExistentes;
+      if (existentes.length) {
+        const bloqueados = existentes.map(x => x.numero);
+        status.textContent = `Os números ${bloqueados.join(', ')} já foram vendidos. Escolha outros.`;
+        status.className = 'status err';
+        numerosSelecionados = numerosSelecionados.filter(n => !bloqueados.includes(n));
+        renderGrid();
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const payloadInsert = numerosSelecionados.map(numero => ({ numero, nome, telefone, valor: VALOR_POR_NUMERO, data_iso: now, pagamento_confirmado: false }));
+      const { error: errInsert } = await supabase.from(TABELA_RIFA).insert(payloadInsert);
+      if (errInsert) throw errInsert;
+
+      status.textContent = `✅ Números ${numerosStr} reservados para ${nome}.`;
+      status.className = 'status ok';
+      const payload = `Rifa do Ifá\nNúmeros: ${numerosStr}\nNome: ${nome}\nTelefone: ${telefone}\nTotal: R$ ${total.toFixed(2).replace('.', ',')}\nStatus: Aguardando confirmação`;
+      document.getElementById('resumoCompra').textContent = `Números ${numerosStr} • ${nome} • Total: R$ ${total.toFixed(2).replace('.', ',')}`;
+      document.getElementById('qrcodeImg').src = `https://quickchart.io/qr?text=${encodeURIComponent(payload)}&size=300`;
+      document.getElementById('qrcodeBox').style.display = 'block';
+
+      const textoZap = `Olá! Quero reservar os números *${numerosStr}* da Rifa do Ifá.\nMeu nome: *${nome}*\nTelefone: *${telefone}*\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
+      window.open(`https://wa.me/${WHATSAPP_PROPRIETARIO}?text=${encodeURIComponent(textoZap)}`, '_blank', 'noopener,noreferrer');
+
+      numerosSelecionados = [];
+      document.getElementById('gridContainer').classList.add('escondido');
+      document.getElementById('btnParticipar').classList.remove('escondido');
+      await carregarVendasServidor();
+    }
+
+    async function processarCompraModal() {
+      const nome = document.getElementById('inputNome').value.trim();
+      const telefone = document.getElementById('inputTelefone').value.trim();
+      const erro = document.getElementById('modalError');
+      if (!nome || !telefone) return erro.textContent = 'Por favor, preencha nome e telefone para continuar.';
+      if (!telefoneValido(telefone)) return erro.textContent = 'Informe um telefone válido com DDD.';
+      erro.textContent = '';
+      closeModal();
+      try { await reservarNumeros(nome, telefone); }
+      catch (e) {
+        document.getElementById('status').textContent = `Erro ao reservar: ${e.message}`;
+        document.getElementById('status').className = 'status err';
+      }
+    }
+
+    document.getElementById('btnParticipar').addEventListener('click', function () {
+      this.classList.add('escondido');
+      document.getElementById('gridContainer').classList.remove('escondido');
+      document.getElementById('status').textContent = '';
+      document.getElementById('status').className = 'status';
+      document.getElementById('qrcodeBox').style.display = 'none';
+      renderGrid();
+    });
+    document.getElementById('btnComprar').addEventListener('click', openModal);
+    document.getElementById('modalCancel').addEventListener('click', closeModal);
+    document.getElementById('modalSubmit').addEventListener('click', processarCompraModal);
+    document.getElementById('inputTelefone').addEventListener('keydown', (e) => { if (e.key === 'Enter') processarCompraModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+    document.getElementById('numeroModal').addEventListener('click', function (event) { if (event.target === this) closeModal(); });
+
+    (async () => {
+      renderGrid();
+      try { await iniciarBackend(); }
+      catch (e) {
+        document.getElementById('status').textContent = 'Configure o Supabase para habilitar reservas compartilhadas em tempo real.';
+        document.getElementById('status').className = 'status err';
+      }
+    })();
+  </script>
+</body>
+</html>
